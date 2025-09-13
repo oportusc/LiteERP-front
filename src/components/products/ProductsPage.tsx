@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_PRODUCTS, GET_MATERIAS_PRIMAS, GET_MIXES } from '../../graphql/products';
 import ProductList from './ProductList';
+import ProductTable from './ProductTable';
 import ProductModal from './ProductModal';
+import { useActiveCompanyId } from '../../stores/companiesStore';
 
 const ProductsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'simples' | 'mixes'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const activeCompanyId = useActiveCompanyId();
 
   // Queries basadas en el tab activo
   const { data: allData, loading: allLoading, error: allError, refetch: refetchAll } = useQuery(GET_PRODUCTS, {
@@ -20,6 +24,24 @@ const ProductsPage: React.FC = () => {
   const { data: mixesData, loading: mixesLoading, error: mixesError, refetch: refetchMixes } = useQuery(GET_MIXES, {
     skip: activeTab !== 'mixes'
   });
+
+  // Refrescar datos cuando cambie la empresa activa
+  useEffect(() => {
+    if (activeCompanyId) {
+      console.log('🔄 Empresa cambiada, refrescando datos de productos...', activeCompanyId);
+      switch (activeTab) {
+        case 'all':
+          refetchAll();
+          break;
+        case 'simples':
+          refetchSimples();
+          break;
+        case 'mixes':
+          refetchMixes();
+          break;
+      }
+    }
+  }, [activeCompanyId, activeTab, refetchAll, refetchSimples, refetchMixes]);
 
   const handleModalSuccess = () => {
     // Refetch data after successful creation
@@ -60,13 +82,39 @@ const ProductsPage: React.FC = () => {
           <p className="text-gray-600 mt-2">Gestión de materias primas y productos mix</p>
         </div>
         
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
-        >
-          <span>➕</span>
-          <span>Nuevo Producto</span>
-        </button>
+        <div className="flex items-center space-x-4">
+          {/* Toggle de vista */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                viewMode === 'table'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              📊 Tabla
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                viewMode === 'cards'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🗃️ Tarjetas
+            </button>
+          </div>
+
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+          >
+            <span>➕</span>
+            <span>Nuevo Producto</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -96,9 +144,13 @@ const ProductsPage: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-lg shadow">
-        <ProductList products={data} loading={loading} error={error} />
-      </div>
+      {viewMode === 'table' ? (
+        <ProductTable products={data} loading={loading} />
+      ) : (
+        <div className="bg-white rounded-lg shadow">
+          <ProductList products={data} loading={loading} error={error} />
+        </div>
+      )}
 
       {/* Modal */}
       <ProductModal 
