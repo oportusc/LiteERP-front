@@ -10,6 +10,9 @@ export * from './user';
 // ==================== COMPANIES ====================
 export * from './companies';
 
+// ==================== PRODUCTS ====================
+export * from './products';
+
 // ==================== RE-EXPORTS PARA COMPATIBILIDAD ====================
 // Mantener las exports originales para no romper código existente
 
@@ -32,3 +35,4 @@ export {
 export type { LoginInput, RegisterInput, AuthResponse } from './auth';
 export type { User, UpdateUserInput } from './user';
 export type { Company, CreateCompanyInput, UpdateCompanyInput } from './companies';
+export type { Product, ProductRecipe, CreateProductInput } from './products';
