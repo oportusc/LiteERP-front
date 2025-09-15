@@ -169,3 +169,4 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, loading }) => {
 };
 
 export default ProductTable;
+
